@@ -1,0 +1,22 @@
+======================================================================
+DATASET AUDIT REPORT
+======================================================================
+
+Dataset: AINovice2005/EldenRing_Small
+Dataset Size: 49771
+
+STATISTICS
+----------------------------------------------------------------------
+Average Question Length: 16.7 tokens
+Average Answer Length: 67.5 tokens
+Exact Duplicates: 417
+Question Duplicates: 3335
+Near-Duplicate Rate: 15.04%
+Contradiction Pairs: 46754
+Unique Questions: 46436
+Topic Clusters: 10
+
+RECOMMENDATIONS
+----------------------------------------------------------------------
+✓ SFTTrainer (high answer determinism, standard supervised fine-tuning)
+⚠ Found 46754 contradictory pairs (93.9%)
