@@ -1,8 +1,10 @@
 # /// script
 # requires-python = ">=3.12,<3.13"
 # dependencies = [
-#     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-#     pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl
+#     "torchvision @ https://download.pytorch.org/whl/cu126/torchvision-0.24.0%2Bcu126-cp312-cp312-linux_x86_64.whl",
+#     "torch @ https://download.pytorch.org/whl/cu126/torch-2.9.0%2Bcu126-cp312-cp312-linux_x86_64.whl",
+#     "torchaudio @ https://download.pytorch.org/whl/cu126/torchaudio-2.9.0%2Bcu126-cp312-cp312-linux_x86_64.whl",
+#     "flash-attn @  https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl"
 #     "unsloth",
 #     "transformers>=4.40",
 #     "datasets",
@@ -153,7 +155,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--dataset", required=True)
+    parser.add_argument("--dataset", required=True, default="AINovice2005/EldenRing_Small")
     parser.add_argument("--output-repo", required=True)
 
     parser.add_argument(
@@ -248,7 +250,50 @@ def main():
 
         dataset = load_dataset(args.dataset, split="train")
 
-        assert "conversations" in dataset.features
+        assert "question" in dataset.features
+        assert "answer" in dataset.features
+
+        def normalize_answer(example):
+
+            answer = example["answer"].strip()
+
+            # Remove repeated spaces
+            answer = " ".join(answer.split())
+
+            # Capitalize first letter if needed
+            if answer and answer[0].islower():
+                answer = answer[0].upper() + answer[1:]
+
+            return {"answer": answer}
+
+
+        dataset = dataset.map(normalize_answer)
+
+        MAX_TOKENS = 256
+
+        def length_filter(example):
+
+            q_len = len(example["question"].split())
+            a_len = len(example["answer"].split())
+
+            return (q_len + a_len) <= MAX_TOKENS
+
+
+        dataset = dataset.filter(length_filter)
+
+        def convert_to_conversation(example):
+            return {
+                "conversations": [
+                    {"role": "user", "content": example["question"]},
+                    {"role": "assistant", "content": example["answer"]},
+                ]
+            }
+        
+        dataset = dataset.map(convert_to_conversation)
+
+        dataset = dataset.remove_columns(
+            [col for col in dataset.column_names if col not in ["conversations"]]
+        )
 
         def format_chat(examples):
 
