@@ -1,18 +1,23 @@
 # /// script
 # requires-python = ">=3.12,<3.13"
 # dependencies = [
-#     "torchvision @ https://download.pytorch.org/whl/cu126/torchvision-0.24.0%2Bcu126-cp312-cp312-linux_x86_64.whl",
-#     "torch @ https://download.pytorch.org/whl/cu126/torch-2.9.0%2Bcu126-cp312-cp312-linux_x86_64.whl",
-#     "torchaudio @ https://download.pytorch.org/whl/cu126/torchaudio-2.9.0%2Bcu126-cp312-cp312-linux_x86_64.whl",
-#     "flash-attn @  https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl"
+#     "torch==2.9.0",
+#     "torchvision==0.24.0",
+#     "torchaudio==2.9.0",
+#     "flash-attn @ https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl",
 #     "unsloth",
 #     "transformers>=4.40",
 #     "datasets",
 #     "accelerate",
 #     "peft",
-#     "huggingface_hub[hf_transfer]",
+#     "huggingface_hub>=1.0.0",
+#     "pyarrow==15.0.2",
+#     "hf-transfer",
 #     "trackio",
 # ]
+#
+# [tool.uv]
+# extra-index-url = ["https://download.pytorch.org/whl/cu126"]
 # ///
 
 """
