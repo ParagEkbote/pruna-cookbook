@@ -1,13 +1,15 @@
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.12,<3.13"
 # dependencies = [
+#     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#     pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl
 #     "unsloth",
+#     "transformers>=4.40",
 #     "datasets",
-#     "huggingface_hub[hf_transfer]",
-#     "trackio",
-#     "transformers",
 #     "accelerate",
 #     "peft",
+#     "huggingface_hub[hf_transfer]",
+#     "trackio",
 # ]
 # ///
 
@@ -27,7 +29,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from typing import List, Dict
+from typing import List
 
 from huggingface_hub import login, HfApi
 from datasets import load_dataset
@@ -36,6 +38,7 @@ from transformers import (
     default_data_collator,
     get_cosine_schedule_with_warmup,
 )
+from peft import get_peft_model_state_dict
 
 sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
@@ -220,6 +223,9 @@ def main():
 
         model.config.use_cache = False
 
+        if hasattr(model.config, "attn_implementation"):
+            model.config.attn_implementation = "flash_attention_2"
+
         if args.gradient_checkpointing:
             model.gradient_checkpointing_enable()
 
@@ -300,8 +306,13 @@ def main():
         # Optimizer
         # ===============================
 
+        lora_params = [
+            p for n, p in model.named_parameters()
+            if n in get_peft_model_state_dict(model)
+        ]
+
         optimizer = torch.optim.AdamW(
-            [p for p in model.parameters() if p.requires_grad],
+            lora_params,
             lr=args.learning_rate,
             fused=True,
         )
