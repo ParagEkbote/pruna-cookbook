@@ -1,13 +1,15 @@
 """
-Dataset Quality Audit Tool
+Dataset Quality Audit & Knowledge Collapse Analysis Tool
 
-Analyzes Hugging Face datasets for:
+Comprehensive analysis of Hugging Face datasets including:
 - Token length statistics
 - Semantic variance and rarity
 - Duplicate detection (exact, near-duplicate)
 - Topic clustering
 - Answer determinism
 - Contradiction detection
+- Entity extraction and diversity analysis
+- Knowledge collapse risk assessment
 - Training regime recommendations
 """
 
@@ -23,6 +25,12 @@ from sentence_transformers import SentenceTransformer
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
 from transformers import AutoTokenizer
+
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+except ImportError:
+    SPACY_AVAILABLE = False
 
 sns.set(style="whitegrid")
 
@@ -229,6 +237,95 @@ def mine_preference_pairs(df):
 
 
 # ============================================================================
+# ENTITY EXTRACTION & KNOWLEDGE COLLAPSE
+# ============================================================================
+
+def extract_entities(df):
+    """Extract named entities from answers using spaCy."""
+    if not SPACY_AVAILABLE:
+        print("⚠ spaCy not installed - skipping entity extraction")
+        return Counter()
+    
+    try:
+        nlp = spacy.load("en_core_web_lg")
+    except OSError:
+        print("⚠ spaCy model 'en_core_web_lg' not found - install with: python -m spacy download en_core_web_lg")
+        return Counter()
+    
+    entities = []
+    
+    for ans in df["answer"]:
+        doc = nlp(ans)
+        for ent in doc.ents:
+            entities.append(ent.text.lower())
+    
+    return Counter(entities)
+
+
+def compute_entropy(counter):
+    """Compute Shannon entropy from frequency distribution."""
+    if len(counter) == 0:
+        return 0.0
+    
+    counts = np.array(list(counter.values()))
+    probs = counts / counts.sum()
+    entropy = -np.sum(probs * np.log(probs + 1e-12))
+    
+    return entropy
+
+
+def compute_frequency_skew(counter):
+    """Compute frequency skew: fraction of counts in top 10 items."""
+    if len(counter) == 0:
+        return 0.0
+    
+    counts = np.array(list(counter.values()))
+    total = np.sum(counts)
+    
+    if len(counts) < 10:
+        top_n = np.sort(counts)
+    else:
+        top_n = np.sort(counts)[-10:]
+    
+    skew = np.sum(top_n) / total
+    
+    return skew
+
+
+def compute_template_similarity(df, sample_size=5000):
+    """Compute fraction of answer pairs with high semantic similarity (>0.9)."""
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    
+    sample = df.sample(min(sample_size, len(df)), random_state=42)
+    answers = sample["answer"].tolist()
+    embeddings = model.encode(answers, show_progress_bar=True)
+    
+    sim = cosine_similarity(embeddings)
+    upper = sim[np.triu_indices_from(sim, k=1)]
+    
+    similarity_score = np.mean(upper > 0.9)
+    
+    return similarity_score
+
+
+def compute_collapse_risk(entropy, skew, template_similarity):
+    """
+    Compute knowledge collapse risk score.
+    
+    High risk indicates dataset may suffer from mode collapse or 
+    template dominance during training.
+    """
+    # Normalize entropy (typical range 0-10, normalize to 0-1)
+    entropy_norm = min(entropy / 10, 1.0)
+    
+    # Risk increases with skew and template similarity, decreases with entropy
+    risk = (template_similarity + skew) / 2 - entropy_norm * 0.3
+    risk = np.clip(risk, 0, 1)
+    
+    return risk
+
+
+# ============================================================================
 # VISUALIZATIONS
 # ============================================================================
 
@@ -289,11 +386,49 @@ def plot_cluster_distribution(cluster_counts):
     plt.close()
 
 
+def plot_entity_frequency(entity_counter, top_n=20):
+    """Plot top N most frequent entities."""
+    if len(entity_counter) == 0:
+        print("⚠ No entities to plot (entity extraction may have failed)")
+        return
+    
+    top = entity_counter.most_common(top_n)
+    labels = [x[0] for x in top]
+    values = [x[1] for x in top]
+    
+    plt.figure(figsize=(12, 5))
+    plt.bar(labels, values, color="steelblue", edgecolor="black")
+    plt.xticks(rotation=45, ha="right")
+    plt.title(f"Top {top_n} Entity Frequency")
+    plt.ylabel("Count")
+    plt.tight_layout()
+    plt.savefig("entity_frequency.png", dpi=100, bbox_inches="tight")
+    plt.close()
+
+
+def plot_entity_distribution(entity_counter):
+    """Plot entity frequency distribution histogram."""
+    if len(entity_counter) == 0:
+        print("⚠ No entities to plot (entity extraction may have failed)")
+        return
+    
+    counts = list(entity_counter.values())
+    
+    plt.figure(figsize=(10, 5))
+    plt.hist(counts, bins=50, color="coral", edgecolor="black")
+    plt.title("Entity Frequency Distribution")
+    plt.xlabel("Frequency")
+    plt.ylabel("Number of Entities")
+    plt.tight_layout()
+    plt.savefig("entity_distribution.png", dpi=100, bbox_inches="tight")
+    plt.close()
+
+
 # ============================================================================
 # TRAINING RECOMMENDATION
 # ============================================================================
 
-def recommend_training_regime(df, contradictions, exact_dup, question_dup, near_dup_rate):
+def recommend_training_regime(df, contradictions, exact_dup, question_dup, near_dup_rate, collapse_risk):
     """Generate training regime recommendations based on dataset quality metrics."""
     avg_difficulty = df["recall_difficulty"].mean()
     avg_determinism = df["determinism_score"].mean()
@@ -327,6 +462,14 @@ def recommend_training_regime(df, contradictions, exact_dup, question_dup, near_
         contradiction_ratio = len(contradictions) / len(df)
         recommendations.append(f"⚠ Found {len(contradictions)} contradictory pairs ({contradiction_ratio:.1%})")
     
+    # Knowledge collapse feedback
+    if collapse_risk > 0.8:
+        recommendations.append("⚠ HIGH KNOWLEDGE COLLAPSE RISK - dataset dominated by templates/entities")
+    elif collapse_risk > 0.4:
+        recommendations.append("• Moderate collapse risk - consider adding entity/template diversity")
+    else:
+        recommendations.append("✓ Low collapse risk - dataset suitable for training")
+    
     return {
         "avg_recall_difficulty": round(avg_difficulty, 4),
         "avg_answer_determinism": round(avg_determinism, 4),
@@ -336,6 +479,7 @@ def recommend_training_regime(df, contradictions, exact_dup, question_dup, near_
         "exact_duplicates": exact_dup,
         "question_duplicates": question_dup,
         "contradiction_pairs": len(contradictions),
+        "collapse_risk": round(collapse_risk, 4),
         "recommendations": recommendations
     }
 
@@ -344,49 +488,64 @@ def recommend_training_regime(df, contradictions, exact_dup, question_dup, near_
 # MAIN AUDIT FUNCTION
 # ============================================================================
 
-def run_audit(dataset_name):
-    """Run complete dataset audit and generate report."""
+def run_audit(dataset_name, enable_entity_analysis=True):
+    """Run complete dataset audit and generate comprehensive report."""
     print("\n" + "=" * 70)
-    print("DATASET QUALITY AUDIT")
+    print("DATASET QUALITY AUDIT & KNOWLEDGE COLLAPSE ANALYSIS")
     print("=" * 70)
     
     # Load and prepare data
-    print(f"\n[1/8] Loading dataset: {dataset_name}")
+    print(f"\n[1/10] Loading dataset: {dataset_name}")
     ds = load_hf_dataset(dataset_name)
     df = dataset_to_df(ds)
-    print(f"      Dataset size: {len(df)} samples")
+    print(f"       Dataset size: {len(df)} samples")
     
     # Token analysis
-    print("[2/8] Computing token lengths...")
+    print("[2/10] Computing token lengths...")
     df = compute_token_lengths(df)
     
     # Duplicate detection
-    print("[3/8] Detecting duplicates...")
+    print("[3/10] Detecting duplicates...")
     exact_dup = detect_exact_duplicates(df)
     question_dup = detect_question_duplicates(df)
     near_dup_rate = detect_near_duplicates(df)
     
     # Semantic analysis
-    print("[4/8] Computing token rarity...")
+    print("[4/10] Computing token rarity...")
     df = compute_token_rarity(df)
     
-    print("[5/8] Computing semantic variance...")
+    print("[5/10] Computing semantic variance...")
     df = compute_semantic_variance(df)
     
     # Difficulty metrics
-    print("[6/8] Computing recall difficulty...")
+    print("[6/10] Computing recall difficulty...")
     df = compute_recall_difficulty(df)
     
-    print("[7/8] Computing answer determinism...")
+    print("[7/10] Computing answer determinism...")
     df = compute_answer_determinism(df)
     
     # Contradiction detection
-    print("[8/8] Detecting contradictions...")
+    print("[8/10] Detecting contradictions...")
     contradictions = detect_contradictions(df)
     
-    # Topic clustering (parallel to above)
-    print("     Computing topic clusters...")
+    # Topic clustering
+    print("[9/10] Computing topic clusters...")
     df, cluster_counts = compute_topic_clusters(df)
+    
+    # Entity extraction & knowledge collapse
+    entity_counter = Counter()
+    entropy = 0.0
+    skew = 0.0
+    template_similarity = 0.0
+    collapse_risk = 0.0
+    
+    if enable_entity_analysis:
+        print("[10/10] Extracting entities and computing collapse risk...")
+        entity_counter = extract_entities(df)
+        entropy = compute_entropy(entity_counter)
+        skew = compute_frequency_skew(entity_counter)
+        template_similarity = compute_template_similarity(df)
+        collapse_risk = compute_collapse_risk(entropy, skew, template_similarity)
     
     # Generate outputs
     print("\n" + "-" * 70)
@@ -398,11 +557,17 @@ def run_audit(dataset_name):
     plot_difficulty_metrics(df)
     plot_cluster_distribution(cluster_counts)
     
+    if enable_entity_analysis and len(entity_counter) > 0:
+        plot_entity_frequency(entity_counter)
+        plot_entity_distribution(entity_counter)
+    
     print("Mining preference pairs...")
     pref_pairs = mine_preference_pairs(df)
     
     # Generate recommendation
-    result = recommend_training_regime(df, contradictions, exact_dup, question_dup, near_dup_rate)
+    result = recommend_training_regime(
+        df, contradictions, exact_dup, question_dup, near_dup_rate, collapse_risk
+    )
     
     # Print summary
     print("\n" + "=" * 70)
@@ -422,6 +587,13 @@ def run_audit(dataset_name):
     print(f"Unique Questions:              {df['question'].nunique()}")
     print(f"Topic Clusters:                {df['cluster'].nunique()}")
     print(f"Preference Pairs Mined:        {len(pref_pairs)}")
+    
+    if enable_entity_analysis:
+        print(f"\nUnique Entities:               {len(entity_counter)}")
+        print(f"Entity Entropy:                {entropy:.4f}")
+        print(f"Entity Frequency Skew:         {skew:.4f}")
+        print(f"Template Similarity:           {template_similarity:.4f}")
+        print(f"Knowledge Collapse Risk:       {result['collapse_risk']:.4f}")
     
     print("\n" + "-" * 70)
     print("TRAINING RECOMMENDATIONS")
@@ -457,8 +629,16 @@ def run_audit(dataset_name):
         f.write(f"Near-Duplicate Rate: {result['near_duplicate_rate']:.2%}\n")
         f.write(f"Contradiction Pairs: {result['contradiction_pairs']}\n")
         f.write(f"Unique Questions: {df['question'].nunique()}\n")
-        f.write(f"Topic Clusters: {df['cluster'].nunique()}\n\n")
-        f.write("RECOMMENDATIONS\n")
+        f.write(f"Topic Clusters: {df['cluster'].nunique()}\n")
+        
+        if enable_entity_analysis:
+            f.write(f"\nUnique Entities: {len(entity_counter)}\n")
+            f.write(f"Entity Entropy: {entropy:.4f}\n")
+            f.write(f"Entity Frequency Skew: {skew:.4f}\n")
+            f.write(f"Template Similarity: {template_similarity:.4f}\n")
+            f.write(f"Knowledge Collapse Risk: {result['collapse_risk']:.4f}\n")
+        
+        f.write("\nRECOMMENDATIONS\n")
         f.write("-" * 70 + "\n")
         for rec in result["recommendations"]:
             f.write(rec + "\n")
@@ -469,6 +649,10 @@ def run_audit(dataset_name):
     print("✓ difficulty_metrics.png")
     print("✓ cluster_distribution.png")
     
+    if enable_entity_analysis and len(entity_counter) > 0:
+        print("✓ entity_frequency.png")
+        print("✓ entity_distribution.png")
+    
     print("\n" + "=" * 70 + "\n")
 
 
@@ -478,7 +662,7 @@ def run_audit(dataset_name):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Audit Hugging Face dataset quality and generate training recommendations"
+        description="Audit Hugging Face dataset quality and knowledge collapse risk"
     )
     parser.add_argument(
         "--dataset",
@@ -486,6 +670,11 @@ if __name__ == "__main__":
         required=True,
         help="Name of Hugging Face dataset to audit (e.g., 'squad', 'wmt14')"
     )
+    parser.add_argument(
+        "--no-entity-analysis",
+        action="store_true",
+        help="Skip entity extraction and knowledge collapse analysis"
+    )
     
     args = parser.parse_args()
-    run_audit(args.dataset)
+    run_audit(args.dataset, enable_entity_analysis=not args.no_entity_analysis)
