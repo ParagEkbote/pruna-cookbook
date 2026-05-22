@@ -1,0 +1,104 @@
+================================================================================
+VALIDATION REPORT
+================================================================================
+
+Total Rows: 28
+Total Columns: 21
+
+Missing Values:
+                                 missing_count  missing_percent
+hqq_backend                                 14             50.0
+compile_backend                             14             50.0
+torch_compile_backend                       14             50.0
+torch_compile_mode                          14             50.0
+compile_mode                                14             50.0
+generation_length                            0              0.0
+actual_prompt_length                         0              0.0
+prompt_target_length                         0              0.0
+model_id                                     0              0.0
+run                                          0              0.0
+prefill_latency_s                            0              0.0
+decode_time_s                                0              0.0
+prefill_peak_memory_gb                       0              0.0
+memory_per_generated_token_mb                0              0.0
+decode_memory_growth_gb                      0              0.0
+peak_memory_gb                               0              0.0
+avg_decode_latency_per_token_ms              0              0.0
+decode_tokens_per_sec                        0              0.0
+quantization                                 0              0.0
+framework                                    0              0.0
+dtype                                        0              0.0
+
+Duplicate Rows: 0
+
+Numeric Summary:
+                                 count         mean          std        min         25%         50%          75%          max
+prompt_target_length              28.0    80.000000    48.880807  32.000000   32.000000   80.000000   128.000000   128.000000
+actual_prompt_length              28.0    86.000000    48.880807  38.000000   38.000000   86.000000   134.000000   134.000000
+generation_length                 28.0  1161.142857  1384.062023  64.000000  128.000000  512.000000  2048.000000  4096.000000
+prefill_latency_s                 28.0     1.072413     5.576902   0.014402    0.014662    0.015217     0.025654    29.528653
+prefill_peak_memory_gb            28.0     1.123736     0.061916   1.048965    1.074730    1.114467     1.140201     1.324334
+decode_time_s                     28.0    16.847229    24.036233   0.648266    2.308094    6.239462    21.593015   111.462664
+decode_tokens_per_sec             28.0    87.406318    18.957166   0.574183   82.447974   83.277859    99.273013    99.882833
+avg_decode_latency_per_token_ms   28.0    72.931448   327.030693  10.011730   10.073231   12.007994    12.128889  1741.604120
+peak_memory_gb                    28.0     1.166321     0.114854   1.051255    1.095730    1.121523     1.206400     1.503009
+decode_memory_growth_gb           28.0     0.042585     0.074520   0.000000    0.000000    0.011885     0.038709     0.276910
+memory_per_generated_token_mb     28.0     0.038608     0.055981   0.000000    0.000000    0.021838     0.064296     0.281822
+
+Negative Values:
+prompt_target_length: 0
+actual_prompt_length: 0
+generation_length: 0
+prefill_latency_s: 0
+prefill_peak_memory_gb: 0
+decode_time_s: 0
+decode_tokens_per_sec: 0
+avg_decode_latency_per_token_ms: 0
+peak_memory_gb: 0
+decode_memory_growth_gb: 0
+memory_per_generated_token_mb: 0
+
+Infinite Values:
+prompt_target_length: 0
+actual_prompt_length: 0
+generation_length: 0
+prefill_latency_s: 0
+prefill_peak_memory_gb: 0
+decode_time_s: 0
+decode_tokens_per_sec: 0
+avg_decode_latency_per_token_ms: 0
+peak_memory_gb: 0
+decode_memory_growth_gb: 0
+memory_per_generated_token_mb: 0
+
+Unique Value Counts:
+prompt_target_length: 2
+actual_prompt_length: 2
+generation_length: 7
+prefill_latency_s: 28
+prefill_peak_memory_gb: 28
+decode_time_s: 28
+decode_tokens_per_sec: 28
+avg_decode_latency_per_token_ms: 28
+peak_memory_gb: 28
+decode_memory_growth_gb: 19
+memory_per_generated_token_mb: 19
+
+Outlier Detection:
+prompt_target_length: 0
+actual_prompt_length: 0
+generation_length: 0
+prefill_latency_s: 1
+prefill_peak_memory_gb: 1
+decode_time_s: 1
+decode_tokens_per_sec: 1
+avg_decode_latency_per_token_ms: 1
+peak_memory_gb: 2
+decode_memory_growth_gb: 4
+memory_per_generated_token_mb: 1
+
+Framework Counts:
+framework
+HQQ      14
+Pruna    14
+Name: count, dtype: int64
