@@ -1,0 +1,5 @@
+,kv_cache_growth_gb_per_token,kv_cache_growth_gb_per_token,tokens_per_sec_per_gb,tokens_per_sec_per_gb,peak_memory_per_token_mb,peak_memory_per_token_mb
+,mean,std,mean,std,mean,std
+framework,,,,,,
+HQQ,5.3400227513450676e-05,2.161295927839876e-05,82.05745242935258,8.87569727487,4.344620796350332,5.846818032790748
+Pruna,6.162578106990873e-06,1.0905024671989539e-05,73.8948179225208,3.350920539909524,5.045126761708941,6.227165962904023
