@@ -2,7 +2,7 @@ from dagster import Definitions
 from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
-from assets import (
+from dataset_card_publishing.assets import (
     squad_train,
     squad_enriched,
     squad_dataset_card,

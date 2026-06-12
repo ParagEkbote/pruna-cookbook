@@ -4,7 +4,7 @@ from dagster_hf_datasets import (
     HFParquetIOManager,
 )
 
-from assets import (
+from distributed_token_sharding.assets import (
     fineweb_dataset,
     tokenized_fineweb,
 )

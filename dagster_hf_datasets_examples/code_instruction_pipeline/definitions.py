@@ -1,19 +1,24 @@
 from dagster import Definitions
+
 from dagster_hf_datasets import (
     HuggingFaceResource,
     HFParquetIOManager,
 )
 
-from streaming_oom_datasets.assets import (
-    dolma_stream,
-    streaming_report,
+from code_instruction_pipeline.assets import (
+    raw_code_stack,
+    language_filtered_code,
+    instruction_examples,
+    code_quality_metrics,
 )
 
 
 defs = Definitions(
     assets=[
-        dolma_stream,
-        streaming_report,
+        raw_code_stack,
+        language_filtered_code,
+        instruction_examples,
+        code_quality_metrics,
     ],
     resources={
         "huggingface": HuggingFaceResource(

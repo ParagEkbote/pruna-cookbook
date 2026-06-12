@@ -1,19 +1,21 @@
 from dagster import Definitions
+
 from dagster_hf_datasets import (
     HuggingFaceResource,
     HFParquetIOManager,
 )
 
-from streaming_oom_datasets.assets import (
-    dolma_stream,
-    streaming_report,
+from dynamic_bucket_partitioning.assets import (
+    language_partitions,
+    opus_books_raw,
+    partition_report,
 )
 
 
 defs = Definitions(
     assets=[
-        dolma_stream,
-        streaming_report,
+        opus_books_raw,
+        partition_report,
     ],
     resources={
         "huggingface": HuggingFaceResource(

@@ -4,7 +4,7 @@ from dagster_hf_datasets import (
     HFParquetIOManager,
 )
 
-from assets import (
+from vision_dataset.assets import (
     conceptual_captions,
     validated_pairs,
     cc_train,

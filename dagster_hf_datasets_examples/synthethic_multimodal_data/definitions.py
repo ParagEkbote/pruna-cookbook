@@ -1,7 +1,7 @@
 from dagster import Definitions
 from dagster_hf_datasets import HuggingFaceResource, HFParquetIOManager
 
-from assets import (
+from synthethic_multimodal_data.assets import (
     diffusiondb_sample,
     nsfw_filtered,
     synthetic_captions,

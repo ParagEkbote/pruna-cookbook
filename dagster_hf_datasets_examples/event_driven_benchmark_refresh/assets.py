@@ -99,7 +99,7 @@ def humaneval_benchmark(
 def humaneval_formatted(
     context,
     humaneval_benchmark: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Reformat HumanEval tasks into a flat evaluation-ready schema.
 
     Merges `prompt` + `canonical_solution` into a single `reference`

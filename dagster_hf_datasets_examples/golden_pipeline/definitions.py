@@ -5,15 +5,15 @@ from dagster_hf_datasets import (
     HFParquetIOManager,
 )
 
-from assets import (
-    c4_raw,
-    c4_cleaned,
-    c4_quality_validated,
+from golden_pipeline.assets import (
+    fineweb_raw,
+    fineweb_cleaned,
+    fineweb_quality_validated,
     quality_report,
-    c4_train,
-    c4_test,
-    c4_train_tokenized,
-    c4_test_tokenized,
+    fineweb_train,
+    fineweb_test,
+    fineweb_train_tokenized,
+    fineweb_test_tokenized,
     dataset_card,
     hub_publication_manifest,
 )
@@ -21,14 +21,14 @@ from assets import (
 
 defs = Definitions(
     assets=[
-        c4_raw,
-        c4_cleaned,
-        c4_quality_validated,
+        fineweb_raw,
+        fineweb_cleaned,
+        fineweb_quality_validated,
         quality_report,
-        c4_train,
-        c4_test,
-        c4_train_tokenized,
-        c4_test_tokenized,
+        fineweb_train,
+        fineweb_test,
+        fineweb_train_tokenized,
+        fineweb_test_tokenized,
         dataset_card,
         hub_publication_manifest,
     ],

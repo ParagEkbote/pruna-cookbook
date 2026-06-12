@@ -5,17 +5,22 @@ from dagster_hf_datasets import (
     HFParquetIOManager,
 )
 
-from assets import (
-    language_partitions,
-    opus_books_raw,
-    partition_report,
+from vision_language_scale_pipeline.assets import (
+    raw_laion_coco,
+    caption_quality_filtered,
+    deduplicated_by_caption_hash,
+    language_identified_captions,
+    dedup_quality_report,
 )
 
 
 defs = Definitions(
     assets=[
-        opus_books_raw,
-        partition_report,
+        raw_laion_coco,
+        caption_quality_filtered,
+        deduplicated_by_caption_hash,
+        language_identified_captions,
+        dedup_quality_report,
     ],
     resources={
         "huggingface": HuggingFaceResource(

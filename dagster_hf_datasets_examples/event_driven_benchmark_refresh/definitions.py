@@ -2,7 +2,7 @@ from dagster import Definitions
 from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
-from assets import (
+from event_driven_benchmark_refresh.assets import (
     humaneval_benchmark,
     humaneval_formatted,
     benchmark_refresh_report,

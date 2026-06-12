@@ -96,7 +96,7 @@ def squad_dataset_card(
     context: AssetExecutionContext,
     squad_train: Dataset,
     squad_enriched: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Generate a Hub dataset card from pipeline metadata and publish it.
 
     HFDatasetPublisher assembles a README.md from processing step
@@ -153,17 +153,16 @@ def squad_dataset_card(
     card_content = publisher.generate_card()
     context.log.info("Dataset card generated (%s chars)", len(card_content))
 
-    context.add_output_metadata(
-        {
+    return MaterializeResult(
+        value={
+            "repo_id": repo_id,
+            "card_content": card_content,
+            "processing_steps": processing_steps,
+        },
+        metadata={
             "repo_id": repo_id,
             "card_length_chars": len(card_content),
             "processing_steps": len(processing_steps),
             "dagster_run_id": context.run_id,
-        }
+        },
     )
-
-    return {
-        "repo_id": repo_id,
-        "card_content": card_content,
-        "processing_steps": processing_steps,
-    }

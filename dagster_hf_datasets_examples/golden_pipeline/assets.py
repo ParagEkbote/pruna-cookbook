@@ -14,20 +14,38 @@ TOKENIZER = "bert-base-uncased"
 
 
 @hf_dataset_asset(
-    path="allenai/c4",
-    config_name="realnewslike",
+    path="HuggingFaceFW/fineweb",
+    config_name="sample-10BT",
     split="train",
     group_name="golden_master_pipeline",
     io_manager_key="hf_parquet_io_manager",
 )
-def c4_raw(
+def fineweb_raw(
     context: AssetExecutionContext,
     dataset: Dataset,
 ) -> MaterializeResult:
+    """
+    Ingest FineWeb dataset sample.
+
+    FineWeb is a modern web corpus used by many
+    state-of-the-art LLMs.
+    """
+
+    sample_size = min(10_000, len(dataset))
+    sampled = dataset.select(range(sample_size))
+
+    context.log.info(
+        "Loaded FineWeb sample: %s rows",
+        sample_size,
+    )
+
     return MaterializeResult(
-        value=dataset.select(range(min(10000, len(dataset)))),
+        value=sampled,
         metadata={
-            "rows": min(10000, len(dataset)),
+            "rows": sample_size,
+            "source_dataset": "HuggingFaceFW/fineweb",
+            "config": "sample-10BT",
+            "fingerprint": sampled._fingerprint,
         },
     )
 
@@ -36,17 +54,42 @@ def c4_raw(
     group_name="golden_master_pipeline",
     io_manager_key="hf_parquet_io_manager",
 )
-def c4_cleaned(
-    c4_raw: Dataset,
+def fineweb_cleaned(
+    context: AssetExecutionContext,
+    fineweb_raw: Dataset,
 ) -> MaterializeResult:
-    cleaned = c4_raw.filter(
-        lambda ex: len(ex["text"].strip()) > 50
+    """
+    Remove very short documents.
+    """
+
+    original_rows = len(fineweb_raw)
+
+    cleaned = fineweb_raw.filter(
+        lambda ex: (
+            ex["text"] is not None
+            and len(ex["text"].strip()) > 50
+        )
+    )
+
+    retention_pct = (
+        round((len(cleaned) / original_rows) * 100, 2)
+        if original_rows > 0
+        else 0.0
+    )
+
+    context.log.info(
+        "Filtered %s → %s rows (%.2f%% retained)",
+        original_rows,
+        len(cleaned),
+        retention_pct,
     )
 
     return MaterializeResult(
         value=cleaned,
         metadata={
-            "rows": len(cleaned),
+            "original_rows": original_rows,
+            "cleaned_rows": len(cleaned),
+            "retention_pct": retention_pct,
         },
     )
 
@@ -55,32 +98,55 @@ def c4_cleaned(
     group_name="golden_master_pipeline",
     io_manager_key="hf_parquet_io_manager",
 )
-def c4_quality_validated(
-    c4_cleaned: Dataset,
+def fineweb_quality_validated(
+    context: AssetExecutionContext,
+    fineweb_cleaned: Dataset,
 ) -> MaterializeResult:
-    validated = c4_cleaned.filter(
-        lambda ex: ex["text"] is not None
+    """
+    Apply simple quality validation.
+    """
+
+    validated = fineweb_cleaned.filter(
+        lambda ex: (
+            ex["text"] is not None
+            and not ex["text"].isspace()
+            and len(ex["text"]) < 10_000
+        )
+    )
+
+    context.log.info(
+        "Validated %s rows",
+        len(validated),
     )
 
     return MaterializeResult(
         value=validated,
         metadata={
-            "rows": len(validated),
+            "validated_rows": len(validated),
         },
     )
 
 
 @asset(group_name="golden_master_pipeline")
 def quality_report(
-    c4_quality_validated: Dataset,
+    context: AssetExecutionContext,
+    fineweb_quality_validated: Dataset,
 ) -> MaterializeResult:
+    """
+    Generate dataset quality report.
+    """
+
+    report = {
+        "dataset": "HuggingFaceFW/fineweb",
+        "validated_rows": len(fineweb_quality_validated),
+        "fingerprint": fineweb_quality_validated._fingerprint,
+    }
+
+    context.log.info("Generated quality report")
+
     return MaterializeResult(
-        value={
-            "rows": len(c4_quality_validated),
-        },
-        metadata={
-            "rows": len(c4_quality_validated),
-        },
+        value=report,
+        metadata=report,
     )
 
 
@@ -88,18 +154,26 @@ def quality_report(
     group_name="golden_master_pipeline",
     io_manager_key="hf_parquet_io_manager",
 )
-def c4_train(
-    c4_quality_validated: Dataset,
+def fineweb_train(
+    context: AssetExecutionContext,
+    fineweb_quality_validated: Dataset,
 ) -> MaterializeResult:
-    split = c4_quality_validated.train_test_split(
+    """
+    Create train split.
+    """
+
+    split = fineweb_quality_validated.train_test_split(
         test_size=0.1,
         seed=42,
     )
 
+    train_ds = split["train"]
+
     return MaterializeResult(
-        value=split["train"],
+        value=train_ds,
         metadata={
-            "rows": len(split["train"]),
+            "rows": len(train_ds),
+            "split": "train",
         },
     )
 
@@ -108,18 +182,26 @@ def c4_train(
     group_name="golden_master_pipeline",
     io_manager_key="hf_parquet_io_manager",
 )
-def c4_test(
-    c4_quality_validated: Dataset,
+def fineweb_test(
+    context: AssetExecutionContext,
+    fineweb_quality_validated: Dataset,
 ) -> MaterializeResult:
-    split = c4_quality_validated.train_test_split(
+    """
+    Create test split.
+    """
+
+    split = fineweb_quality_validated.train_test_split(
         test_size=0.1,
         seed=42,
     )
 
+    test_ds = split["test"]
+
     return MaterializeResult(
-        value=split["test"],
+        value=test_ds,
         metadata={
-            "rows": len(split["test"]),
+            "rows": len(test_ds),
+            "split": "test",
         },
     )
 
@@ -128,19 +210,32 @@ def c4_test(
     group_name="golden_master_pipeline",
     io_manager_key="hf_parquet_io_manager",
 )
-def c4_train_tokenized(
-    c4_train: Dataset,
+def fineweb_train_tokenized(
+    context: AssetExecutionContext,
+    fineweb_train: Dataset,
 ) -> MaterializeResult:
+    """
+    Tokenize train split.
+    """
+
     tokenizer = AutoTokenizer.from_pretrained(
         TOKENIZER
     )
 
-    tokenized = c4_train.map(
+    tokenized = fineweb_train.map(
         lambda batch: tokenizer(
             batch["text"],
             truncation=True,
+            max_length=512,
         ),
         batched=True,
+        batch_size=1000,
+        desc="Tokenizing train split",
+    )
+
+    context.log.info(
+        "Tokenized train split: %s rows",
+        len(tokenized),
     )
 
     return MaterializeResult(
@@ -148,6 +243,7 @@ def c4_train_tokenized(
         metadata={
             "rows": len(tokenized),
             "tokenizer": TOKENIZER,
+            "max_length": 512,
         },
     )
 
@@ -156,19 +252,32 @@ def c4_train_tokenized(
     group_name="golden_master_pipeline",
     io_manager_key="hf_parquet_io_manager",
 )
-def c4_test_tokenized(
-    c4_test: Dataset,
+def fineweb_test_tokenized(
+    context: AssetExecutionContext,
+    fineweb_test: Dataset,
 ) -> MaterializeResult:
+    """
+    Tokenize test split.
+    """
+
     tokenizer = AutoTokenizer.from_pretrained(
         TOKENIZER
     )
 
-    tokenized = c4_test.map(
+    tokenized = fineweb_test.map(
         lambda batch: tokenizer(
             batch["text"],
             truncation=True,
+            max_length=512,
         ),
         batched=True,
+        batch_size=1000,
+        desc="Tokenizing test split",
+    )
+
+    context.log.info(
+        "Tokenized test split: %s rows",
+        len(tokenized),
     )
 
     return MaterializeResult(
@@ -176,29 +285,49 @@ def c4_test_tokenized(
         metadata={
             "rows": len(tokenized),
             "tokenizer": TOKENIZER,
+            "max_length": 512,
         },
     )
 
 
 @asset(group_name="golden_master_pipeline")
 def dataset_card(
-    c4_train_tokenized: Dataset,
-    c4_test_tokenized: Dataset,
+    fineweb_train_tokenized: Dataset,
+    fineweb_test_tokenized: Dataset,
 ) -> MaterializeResult:
-    card = f"""
-# Golden Master Dataset
+    """
+    Generate dataset card.
+    """
 
-Train Rows: {len(c4_train_tokenized)}
-Test Rows: {len(c4_test_tokenized)}
+    card = f"""
+# FineWeb Golden Master Dataset
+
+## Dataset Summary
+
+Source: HuggingFaceFW/fineweb
+Configuration: sample-10BT
+
+## Splits
+
+Train Rows: {len(fineweb_train_tokenized)}
+Test Rows: {len(fineweb_test_tokenized)}
+
+## Tokenization
 
 Tokenizer: {TOKENIZER}
+
+## Pipeline
+
+Raw → Cleaned → Validated → Split → Tokenized
+
+Generated by dagster_hf_datasets.
 """
 
     return MaterializeResult(
         value=card,
         metadata={
-            "train_rows": len(c4_train_tokenized),
-            "test_rows": len(c4_test_tokenized),
+            "train_rows": len(fineweb_train_tokenized),
+            "test_rows": len(fineweb_test_tokenized),
         },
     )
 
@@ -207,9 +336,16 @@ Tokenizer: {TOKENIZER}
 def hub_publication_manifest(
     dataset_card: str,
 ) -> MaterializeResult:
+    """
+    Simulated publication manifest.
+    """
+
     manifest = {
         "status": "ready_for_publish",
         "repository": "your-org/golden-master-dataset",
+        "source_dataset": "HuggingFaceFW/fineweb",
+        "tokenizer": TOKENIZER,
+        "pipeline": "golden_master_pipeline",
     }
 
     return MaterializeResult(

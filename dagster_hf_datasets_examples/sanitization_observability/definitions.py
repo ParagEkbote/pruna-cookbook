@@ -2,7 +2,7 @@ from dagster import Definitions
 from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
-from assets import (
+from sanitization_observability.assets import (
     raw_fineweb_edu,
     filtered_fineweb_edu,
     deduplicated_fineweb_edu,

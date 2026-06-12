@@ -2,7 +2,7 @@ from dagster import Definitions
 from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
-from assets import imdb_train, imdb_test
+from basic_hub_ingestion.assets import imdb_train, imdb_test
 
 
 defs = Definitions(
