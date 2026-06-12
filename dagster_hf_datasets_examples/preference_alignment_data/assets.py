@@ -71,7 +71,7 @@ def dpo_training_dataset(
 
 @hf_dataset_asset(
     path="allenai/ultrafeedback_binarized_cleaned",
-    split="train",
+    split="train_prefs",
     group_name="preference_alignment",
     io_manager_key="hf_parquet_io_manager",
 )
