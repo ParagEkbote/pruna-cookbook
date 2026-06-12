@@ -4,11 +4,11 @@ from dagster_hf_datasets import (
 )
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
-from assets import dpo_training_dataset
+from preference_alignment_data.assets import dpo_training_dataset, ultrafeedback_preference_dataset
 
 
 defs = Definitions(
-    assets=[dpo_training_dataset],
+    assets=[dpo_training_dataset, ultrafeedback_preference_dataset],
     resources={
         "huggingface": HuggingFaceResource(
             cache_dir=".hf_cache",

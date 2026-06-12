@@ -353,7 +353,7 @@ def curation_report(
     corrupt_removed: Dataset,
     deduplicated_images: Dataset,
     aspect_ratio_validated: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Produce a full funnel report tracking row counts at each curation stage.
 
     Shows exactly how many images were dropped at each step and the
@@ -366,6 +366,8 @@ def curation_report(
         "after_deduplication": len(deduplicated_images),
         "after_aspect_ratio_validation": len(aspect_ratio_validated),
     }
+
+    report = stages
 
     raw = stages["raw"]
     report = {
@@ -382,14 +384,15 @@ def curation_report(
 
     context.log.info("Curation funnel: %s", report["stages"])
     context.log.info("Final retention: %.1f%%", report["final_retention_pct"])
-    context.add_output_metadata(
-        {
+
+    return MaterializeResult(
+        value=report,
+        metadata={
             **{f"stage_{k}": v for k, v in stages.items()},
             "total_dropped": report["total_dropped"],
             "final_retention_pct": report["final_retention_pct"],
-        }
+        },
     )
-    return report
 
 
 # ── Asset checks ──────────────────────────────────────────────────────────────

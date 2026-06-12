@@ -137,7 +137,7 @@ def cleaning_quality_report(
     context: AssetExecutionContext,
     raw_fineweb_edu: Dataset,
     deduplicated_fineweb_edu: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Emit a structured quality report comparing raw vs. cleaned dataset.
 
     Logged as structured metadata visible in the Dagster UI asset catalog.
@@ -155,16 +155,15 @@ def cleaning_quality_report(
 
     context.log.info("Quality report: %s", report)
 
-    context.add_output_metadata(
-        {
+    return MaterializeResult(
+        value=report,
+        metadata={
             "raw_rows": raw_rows,
             "clean_rows": clean_rows,
             "dropped_rows": raw_rows - clean_rows,
             "retention_pct": retention_pct,
-        }
+        },
     )
-
-    return report
 
 
 # ── Asset checks ──────────────────────────────────────────────────────────────

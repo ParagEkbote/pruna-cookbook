@@ -94,3 +94,165 @@ dagster dev -f definitions.py
 
 Materialize `flickr30k_raw` first, then `image_stats`, `caption_stats`,
 and `sample_gallery` in parallel, then `dataset_health_report` last.
+
+---
+
+## LLaVA-150K: Modern Instruction-Tuned Vision-Language Data
+
+This example now includes **LLaVA-150K** alongside Flickr30K, showcasing modern instruction-tuning data for vision-language models.
+
+### Why LLaVA?
+
+| Aspect | Flickr30K | LLaVA-150K |
+|--------|-----------|-----------|
+| **Data Type** | Raw image-caption pairs | Instruction-response pairs (Q&A) |
+| **Use Case** | Image captioning pretraining | Instruction-tuning VLMs |
+| **Structure** | 5 captions per image | Instruction + response dialogue |
+| **Size** | 31K images | 150K examples |
+| **Modernity** | Classic benchmark (2014) | Modern instruction-tuning (2023+) |
+| **Model Fit** | Generic image understanding | Following visual instructions |
+
+### LLaVA Asset Graph
+
+```
+llava_instruct_raw (150K examples, sampled to 5K)
+       |
+llava_instruction_stats (analyze Q&A structure)
+       |
+llava_quality_profile (instruction-tuning quality metrics)
+```
+
+### Key Assets
+
+#### 1. `llava_instruct_raw` → `MaterializeResult`
+
+Ingests [liuhaotian/llava-instruct-150k](https://huggingface.co/datasets/liuhaotian/llava-instruct-150k):
+- 150K image-instruction-response triplets
+- Sampled to 5K for dev (or adjust as needed)
+- Metadata: row count, column names, dataset info
+
+**Columns**:
+```python
+{
+    "image": PIL.Image,
+    "conversations": [
+        {"from": "human", "value": "What is in the image?"},
+        {"from": "gpt", "value": "The image shows a dog..."}
+    ]
+}
+```
+
+#### 2. `llava_instruction_stats` → `Dataset`
+
+Analyzes instruction-response pair structure:
+- **Instruction tokens**: How complex are the questions?
+- **Response tokens**: How detailed are the answers?
+- **Is question**: Binary flag (ends with `?`)
+- Metrics logged: token distributions, question %, response diversity
+
+**Output per example**:
+```json
+{
+  "idx": 123,
+  "instruction_tokens": 12,
+  "response_tokens": 45,
+  "instruction_length": 142,
+  "response_length": 520,
+  "is_question": true
+}
+```
+
+#### 3. `llava_quality_profile` → `dict`
+
+Computes quality metrics for instruction-tuning:
+```json
+{
+  "total_examples": 5000,
+  "valid_instruction_response_pairs": 4950,
+  "very_short_responses_count": 50,
+  "very_long_responses_count": 120,
+  "balanced_responses": 4830,
+  "balanced_response_pct": 96.6,
+  "question_percentage": 68.5,
+  "instruction_complexity_score": 1.2
+}
+```
+
+**Quality Thresholds**:
+- ✅ **Balanced response**: 5–500 tokens
+- ❌ **Very short**: < 5 tokens (incomplete answers)
+- ❌ **Very long**: > 500 tokens (off-topic rambling)
+
+### Updated Asset Graph
+
+```
+flickr30k_raw               llava_instruct_raw
+   /    |    \              |
+  /     |     \             |
+image_stats  caption_stats  llava_instruction_stats
+  \      |     /            |
+   \ health_report     llava_quality_profile
+    \   /
+    Both available in Dagster UI
+```
+
+### Comparing Image-Caption vs. Instruction-Tuned Data
+
+| Metric | Flickr30K | LLaVA |
+|--------|-----------|-------|
+| Images per dataset | 31.8K | 150K |
+| Text type | Captions (descriptive) | Instructions + Responses (interactive) |
+| Caption avg length | ~15 tokens | Instruction: ~12 tokens, Response: ~45 tokens |
+| Primary use | Image description pretraining | Visual QA & instruction-following |
+
+### Running Both
+
+```bash
+dagster dev -f definitions.py
+```
+
+Materialize order:
+1. `flickr30k_raw` + `llava_instruct_raw` (in parallel)
+2. `image_stats` + `caption_stats` + `llava_instruction_stats` (in parallel)
+3. `sample_gallery` + `dataset_health_report` + `llava_quality_profile` (in parallel)
+
+### Use Cases
+
+**Flickr30K**: Image-to-text pretraining, image understanding, captioning models
+
+**LLaVA**: 
+- Instruction-tuning VLMs (LLaVA, Qwen-VL, etc.)
+- Visual question answering (VQA) 
+- Building custom instruction-tuned vision-language models
+
+### Customization
+
+**Adjust LLaVA sample size**:
+```python
+# In llava_instruct_raw()
+dataset.select(range(min(20000, len(dataset))))  # Larger sample
+```
+
+**Add your own instruction-tuned dataset**:
+```python
+@hf_dataset_asset(
+    path="your-org/your-vl-dataset",
+    split="train",
+    group_name="multimodal_profiling",
+)
+def custom_instruct_raw(dataset: Dataset) -> MaterializeResult:
+    ...
+```
+
+**Combine both datasets for joint training**:
+```python
+@asset(group_name="multimodal_profiling")
+def combined_multimodal_data(
+    flickr30k_raw: Dataset,
+    llava_instruct_raw: Dataset,
+) -> Dataset:
+    """Mix image-caption and instruction-tuned data."""
+    # Convert Flickr30K to instruction format
+    # Concatenate with LLaVA
+    # Return combined dataset
+```

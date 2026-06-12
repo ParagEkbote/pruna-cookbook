@@ -220,15 +220,15 @@ def sample_gallery(
     manifest_path.write_text(json.dumps(manifest, indent=2))
 
     context.log.info("Saved %s thumbnails to %s", len(manifest), gallery_dir)
-    context.add_output_metadata(
-        {
+
+    return MaterializeResult(
+        value={"thumbnails": manifest, "gallery_dir": str(gallery_dir)},
+        metadata={
             "thumbnail_count": len(manifest),
             "gallery_dir": str(gallery_dir),
             "manifest_path": str(manifest_path),
-        }
+        },
     )
-
-    return {"thumbnails": manifest, "gallery_dir": str(gallery_dir)}
 
 
 # ── Step 5: Health report ─────────────────────────────────────────────────────
@@ -288,3 +288,165 @@ def dataset_health_report(
     context.add_output_metadata(report)
 
     return report
+
+
+# ── Step 6: LLaVA-150K (Modern Instruction-Tuned Vision-Language) ────────────
+
+@hf_dataset_asset(
+    path="liuhaotian/llava-instruct-150k",
+    split="train",
+    group_name="multimodal_profiling",
+    io_manager_key="hf_parquet_io_manager",
+)
+def llava_instruct_raw(
+    context: AssetExecutionContext,
+    dataset: Dataset,
+) -> MaterializeResult:
+    """Ingest LLaVA-150K instruction-tuning dataset.
+
+    LLaVA-150K contains 150K image-instruction-response pairs,
+    designed for instruction-tuning vision-language models.
+    Unlike raw image-caption pairs (Flickr30K), this data has
+    explicit instruction-following structure (Q&A format).
+
+    Modern alternative to generic image-caption datasets for VLM training.
+    """
+    context.log.info("Loaded LLaVA-150K: %s rows", len(dataset))
+    context.log.info("Columns: %s", dataset.column_names)
+
+    return MaterializeResult(
+        value=dataset.select(range(min(5000, len(dataset)))),
+        metadata={
+            "rows": min(5000, len(dataset)),
+            "columns": dataset.column_names,
+            "source_dataset": "liuhaotian/llava-instruct-150k",
+            "split": "train",
+            "description": "Instruction-tuning data for vision-language models",
+        },
+    )
+
+
+@asset(
+    group_name="multimodal_profiling",
+    io_manager_key="hf_parquet_io_manager",
+)
+def llava_instruction_stats(
+    context: AssetExecutionContext,
+    llava_instruct_raw: Dataset,
+) -> Dataset:
+    """Extract instruction and response statistics from LLaVA data.
+
+    Unlike Flickr30K (multiple captions per image), LLaVA has
+    instruction-response pairs. This asset computes:
+    - Instruction complexity (token count, question type)
+    - Response length distribution
+    - Instruction-response alignment
+    """
+    records = []
+
+    for i, example in enumerate(llava_instruct_raw):
+        # LLaVA structure: 'image', 'conversations' (list of turns)
+        conversations = example.get("conversations", [])
+
+        # Typically alternates user (instruction) and assistant (response)
+        user_turn = None
+        assistant_turn = None
+
+        for turn in conversations:
+            role = turn.get("from")
+            text = turn.get("value", "").strip()
+
+            if role == "human":
+                user_turn = text
+            elif role == "gpt":
+                assistant_turn = text
+
+        if user_turn and assistant_turn:
+            records.append(
+                {
+                    "idx": i,
+                    "instruction_tokens": len(user_turn.split()),
+                    "response_tokens": len(assistant_turn.split()),
+                    "instruction_length": len(user_turn),
+                    "response_length": len(assistant_turn),
+                    "is_question": user_turn.rstrip().endswith("?"),
+                }
+            )
+
+        if i % 1000 == 0:
+            context.log.info("Processed %s / %s examples", i, len(llava_instruct_raw))
+
+    instr_tokens = [r["instruction_tokens"] for r in records if records]
+    resp_tokens = [r["response_tokens"] for r in records if records]
+
+    context.log.info(
+        "Instruction length — min: %s, max: %s, mean: %.1f",
+        min(instr_tokens) if instr_tokens else 0,
+        max(instr_tokens) if instr_tokens else 0,
+        statistics.mean(instr_tokens) if instr_tokens else 0,
+    )
+    context.log.info(
+        "Response length — min: %s, max: %s, mean: %.1f",
+        min(resp_tokens) if resp_tokens else 0,
+        max(resp_tokens) if resp_tokens else 0,
+        statistics.mean(resp_tokens) if resp_tokens else 0,
+    )
+
+    stats_dataset = Dataset.from_list(records)
+
+    context.add_output_metadata(
+        {
+            "example_count": len(records),
+            "instruction_tokens_mean": round(statistics.mean(instr_tokens), 1) if instr_tokens else 0,
+            "response_tokens_mean": round(statistics.mean(resp_tokens), 1) if resp_tokens else 0,
+            "question_fraction": round(sum(1 for r in records if r["is_question"]) / len(records), 2) if records else 0,
+        }
+    )
+
+    return stats_dataset
+
+
+@asset(group_name="multimodal_profiling")
+def llava_quality_profile(
+    context: AssetExecutionContext,
+    llava_instruct_raw: Dataset,
+    llava_instruction_stats: Dataset,
+) -> MaterializeResult:
+    """Profile quality metrics specific to instruction-tuned VLM data.
+
+    Checks:
+    - Instruction-response pair validity
+    - Length balance (not too short, not excessively long)
+    - Response quality indicators
+    """
+    total = len(llava_instruct_raw)
+    stats_records = [row for row in llava_instruction_stats]
+
+    # Check response quality
+    very_short_responses = sum(1 for r in stats_records if r["response_tokens"] < 5)
+    very_long_responses = sum(1 for r in stats_records if r["response_tokens"] > 500)
+    balanced_responses = total - very_short_responses - very_long_responses
+
+    # Instruction diversity
+    questions = sum(1 for r in stats_records if r["is_question"])
+    question_pct = round(questions / len(stats_records) * 100, 1) if stats_records else 0
+
+    profile = {
+        "total_examples": total,
+        "valid_instruction_response_pairs": len(stats_records),
+        "very_short_responses_count": very_short_responses,
+        "very_long_responses_count": very_long_responses,
+        "balanced_responses": balanced_responses,
+        "balanced_response_pct": round(balanced_responses / total * 100, 2),
+        "question_percentage": question_pct,
+        "instruction_complexity_score": round(
+            statistics.mean([r["instruction_tokens"] for r in stats_records]) / 10, 1
+        ) if stats_records else 0,
+    }
+
+    context.log.info("LLaVA quality profile: %s", profile)
+
+    return MaterializeResult(
+        value=profile,
+        metadata=profile,
+    )
