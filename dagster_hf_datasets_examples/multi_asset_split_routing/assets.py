@@ -1,4 +1,4 @@
-from dagster import AssetExecutionContext, MaterializeResult
+from dagster import AssetExecutionContext, MaterializeResult, asset
 from dagster_hf_datasets import hf_multi_asset
 from datasets import Dataset
 
@@ -57,9 +57,6 @@ def glue_sst2(
 # Downstream assets reference individual splits by name.
 # This demonstrates the asset graph visibility benefit of hf_multi_asset:
 # each split has its own lineage, checks, and materialization history.
-
-from dagster import asset
-
 
 @asset(
     group_name="multi_asset_splits",

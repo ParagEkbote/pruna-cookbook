@@ -417,7 +417,7 @@ def llava_quality_profile(
     - Response quality indicators
     """
     total = len(llava_instruct_raw)
-    stats_records = [row for row in llava_instruction_stats]
+    stats_records = list(llava_instruction_stats)
 
     # Check response quality
     very_short_responses = sum(1 for r in stats_records if r["response_tokens"] < 5)
