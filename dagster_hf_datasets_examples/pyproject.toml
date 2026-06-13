@@ -12,6 +12,9 @@ dependencies = [
     "dagster-hf-datasets",
     "datasets",
     "transformers",
+    "sentence-transformers",
+    "torch",
+    "pillow",
 ]
 
 [tool.ruff]

@@ -37,7 +37,7 @@ High-quality audio resource for training speech recognition and speech-to-text m
 ```python
 @hf_dataset_asset(
     path="mozilla-foundation/common_voice_11_0",
-    config_name="en",
+    config="en",
     split="train",
 )
 def curated_audio_dataset(context, dataset: Dataset) -> MaterializeResult:

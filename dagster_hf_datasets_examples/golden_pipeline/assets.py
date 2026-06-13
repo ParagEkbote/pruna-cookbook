@@ -12,7 +12,7 @@ TOKENIZER = "bert-base-uncased"
 
 @hf_dataset_asset(
     path="HuggingFaceFW/fineweb",
-    config_name="sample-10BT",
+    config="sample-10BT",
     split="train",
     group_name="golden_master_pipeline",
     io_manager_key="hf_parquet_io_manager",
@@ -219,6 +219,8 @@ def fineweb_train_tokenized(
         TOKENIZER
     )
 
+    assert tokenizer is not None
+
     tokenized = fineweb_train.map(
         lambda batch: tokenizer(
             batch["text"],
@@ -260,6 +262,8 @@ def fineweb_test_tokenized(
     tokenizer = AutoTokenizer.from_pretrained(
         TOKENIZER
     )
+
+    assert tokenizer is not None
 
     tokenized = fineweb_test.map(
         lambda batch: tokenizer(

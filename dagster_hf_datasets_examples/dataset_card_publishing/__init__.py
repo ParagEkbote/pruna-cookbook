@@ -1,5 +1,5 @@
 from dataset_card_publishing.assets import (
-    squad_dataset_card,
+    publish_squad_dataset,
     squad_enriched,
     squad_train,
 )

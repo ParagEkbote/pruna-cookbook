@@ -8,7 +8,7 @@ MAX_DURATION = 20.0
 
 @hf_dataset_asset(
     path="mozilla-foundation/common_voice_11_0",
-    config_name="en",
+    config="en",
     split="train",
     group_name="audio_dataset_curation",
     io_manager_key="hf_parquet_io_manager",

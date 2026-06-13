@@ -37,6 +37,8 @@ def tokenized_fineweb(
         TOKENIZER
     )
 
+    assert tokenizer is not None
+
     tokenized = fineweb_dataset.map(
         lambda batch: tokenizer(
             batch["text"],

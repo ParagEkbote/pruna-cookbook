@@ -3,7 +3,7 @@ from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from dataset_card_publishing.assets import (
-    squad_dataset_card,
+    publish_squad_dataset,
     squad_enriched,
     squad_train,
 )
@@ -12,7 +12,7 @@ defs = Definitions(
     assets=[
         squad_train,
         squad_enriched,
-        squad_dataset_card,
+        publish_squad_dataset,
     ],
     resources={
         "huggingface": HuggingFaceResource(
