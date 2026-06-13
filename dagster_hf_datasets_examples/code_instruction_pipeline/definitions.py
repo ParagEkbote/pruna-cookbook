@@ -2,8 +2,8 @@ from dagster import Definitions
 
 from dagster_hf_datasets import (
     HuggingFaceResource,
-    HFParquetIOManager,
 )
+from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from code_instruction_pipeline.assets import (
     raw_code_stack,
