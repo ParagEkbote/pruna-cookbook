@@ -6,7 +6,6 @@ from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from audio_dataset_curation.assets import curated_audio_dataset
 
-
 defs = Definitions(
     assets=[curated_audio_dataset],
     resources={

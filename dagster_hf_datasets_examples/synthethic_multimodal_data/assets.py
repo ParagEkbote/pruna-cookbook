@@ -13,7 +13,6 @@ from dagster import (
 from dagster_hf_datasets import hf_dataset_asset
 from datasets import Dataset
 
-
 # ── Config ─────────────────────────────────────────────────────────────────
 #
 # SAMPLE_SIZE controls CPU runtime. BLIP-base captioning takes roughly

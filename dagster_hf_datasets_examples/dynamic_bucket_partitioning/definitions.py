@@ -1,16 +1,13 @@
 from dagster import Definitions
-
 from dagster_hf_datasets import (
     HuggingFaceResource,
 )
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from dynamic_bucket_partitioning.assets import (
-    language_partitions,
     opus_books_raw,
     partition_report,
 )
-
 
 defs = Definitions(
     assets=[

@@ -1,7 +1,6 @@
-from dagster import AssetExecutionContext, AssetOut, MaterializeResult
+from dagster import AssetExecutionContext, MaterializeResult
 from dagster_hf_datasets import hf_multi_asset
 from datasets import Dataset
-
 
 # ── Multi-split ingestion ─────────────────────────────────────────────────────
 #
@@ -60,7 +59,6 @@ def glue_sst2(
 # each split has its own lineage, checks, and materialization history.
 
 from dagster import asset
-from datasets import ClassLabel
 
 
 @asset(

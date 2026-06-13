@@ -13,9 +13,8 @@ from dagster import (
     asset,
     sensor,
 )
-from dagster_hf_datasets import HuggingFaceResource, hf_dataset_asset
+from dagster_hf_datasets import hf_dataset_asset
 from datasets import Dataset, load_dataset_builder
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

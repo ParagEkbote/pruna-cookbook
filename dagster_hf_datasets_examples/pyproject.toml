@@ -11,6 +11,7 @@ dependencies = [
     "dagster",
     "dagster-hf-datasets",
     "datasets",
+    "transformers",
 ]
 
 [tool.ruff]
@@ -19,26 +20,23 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = [
-    "E",    # pycodestyle errors
-    "W",    # pycodestyle warnings
-    "F",    # Pyflakes
-    "I",    # isort
-    "B",    # flake8-bugbear
-    "C4",   # flake8-comprehensions
-    "UP",   # pyupgrade
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "UP",
 ]
 ignore = [
-    "E501",  # line too long (handled by formatter)
-    "W191",  # indentation contains tabs
+    "E501",
+    "W191",
+    "F401",
 ]
 
 [tool.ruff.lint.isort]
 known-first-party = ["dagster_hf_datasets_examples"]
 
 [tool.ruff.format]
-line-length = 100
-
-[tool.pyright]
-include = ["**/*.py"]
-exclude = ["**/node_modules", "**/__pycache__", ".venv"]
-typeCheckingMode = "standard"
+quote-style = "double"
+indent-style = "space"

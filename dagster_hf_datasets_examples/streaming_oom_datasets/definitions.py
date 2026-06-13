@@ -9,7 +9,6 @@ from streaming_oom_datasets.assets import (
     streaming_report,
 )
 
-
 defs = Definitions(
     assets=[
         dolma_stream,

@@ -6,7 +6,6 @@ from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from preference_alignment_data.assets import dpo_training_dataset, ultrafeedback_preference_dataset
 
-
 defs = Definitions(
     assets=[dpo_training_dataset, ultrafeedback_preference_dataset],
     resources={

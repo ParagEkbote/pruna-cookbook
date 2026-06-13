@@ -15,7 +15,6 @@ from dagster import (
 from dagster_hf_datasets import hf_dataset_asset
 from datasets import Dataset
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _image_hash(img) -> str:
@@ -323,7 +322,7 @@ def curated_export(
         "num_classes": len(label_counts),
         "arrow_path": str(arrow_path),
         "parquet_path": str(parquet_path),
-        "class_distribution_sample": dict(list(sorted(label_counts.items()))[:10]),
+        "class_distribution_sample": dict(sorted(label_counts.items())[:10]),
     }
 
     manifest_path = export_dir / "manifest.json"

@@ -1,7 +1,7 @@
 from vision_dataset.assets import (
-    conceptual_captions,
-    validated_pairs,
     cc_train,
     cc_validation,
+    conceptual_captions,
     dataset_card,
+    validated_pairs,
 )

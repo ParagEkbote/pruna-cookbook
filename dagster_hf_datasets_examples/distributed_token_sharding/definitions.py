@@ -9,7 +9,6 @@ from distributed_token_sharding.assets import (
     tokenized_fineweb,
 )
 
-
 defs = Definitions(
     assets=[
         fineweb_dataset,

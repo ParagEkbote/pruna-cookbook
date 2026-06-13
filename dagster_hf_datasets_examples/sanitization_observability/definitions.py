@@ -3,14 +3,13 @@ from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from sanitization_observability.assets import (
-    raw_fineweb_edu,
-    filtered_fineweb_edu,
-    deduplicated_fineweb_edu,
-    cleaning_quality_report,
     check_no_null_text,
     check_retention_rate,
+    cleaning_quality_report,
+    deduplicated_fineweb_edu,
+    filtered_fineweb_edu,
+    raw_fineweb_edu,
 )
-
 
 defs = Definitions(
     assets=[

@@ -3,16 +3,15 @@ from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from synthethic_multimodal_data.assets import (
+    caption_alignment_scores,
+    check_mean_alignment,
+    check_no_empty_captions,
     diffusiondb_sample,
     nsfw_filtered,
     synthetic_captions,
-    caption_alignment_scores,
     synthetic_dataset_final,
     synthetic_generation_report,
-    check_no_empty_captions,
-    check_mean_alignment,
 )
-
 
 defs = Definitions(
     assets=[

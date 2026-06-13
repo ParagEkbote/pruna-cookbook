@@ -2,7 +2,6 @@ from dagster import AssetExecutionContext, MaterializeResult
 from dagster_hf_datasets import hf_dataset_asset
 from datasets import Dataset
 
-
 MIN_DURATION = 1.0
 MAX_DURATION = 20.0
 

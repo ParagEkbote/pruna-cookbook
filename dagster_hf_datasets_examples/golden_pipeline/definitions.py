@@ -1,23 +1,21 @@
 from dagster import Definitions
-
 from dagster_hf_datasets import (
     HuggingFaceResource,
 )
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from golden_pipeline.assets import (
-    fineweb_raw,
+    dataset_card,
     fineweb_cleaned,
     fineweb_quality_validated,
-    quality_report,
-    fineweb_train,
+    fineweb_raw,
     fineweb_test,
-    fineweb_train_tokenized,
     fineweb_test_tokenized,
-    dataset_card,
+    fineweb_train,
+    fineweb_train_tokenized,
     hub_publication_manifest,
+    quality_report,
 )
-
 
 defs = Definitions(
     assets=[

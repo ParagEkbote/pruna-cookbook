@@ -5,13 +5,12 @@ from dagster_hf_datasets import (
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from vision_dataset.assets import (
-    conceptual_captions,
-    validated_pairs,
     cc_train,
     cc_validation,
+    conceptual_captions,
     dataset_card,
+    validated_pairs,
 )
-
 
 defs = Definitions(
     assets=[

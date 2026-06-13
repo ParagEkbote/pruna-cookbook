@@ -1,11 +1,9 @@
 import hashlib
 import statistics
-from collections import Counter
 
 from dagster import AssetExecutionContext, MaterializeResult, asset
 from dagster_hf_datasets import hf_dataset_asset
 from datasets import Dataset
-
 
 # ── Large-Scale Vision-Language Data Processing ─────────────────────────────
 

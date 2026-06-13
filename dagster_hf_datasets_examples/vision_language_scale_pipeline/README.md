@@ -11,11 +11,6 @@ This example demonstrates **large-scale multimodal data processing** with dedupl
 - **Quality**: Balanced between scale and quality (unlike raw LAION which can be noisy)
 - **Use Cases**: Training CLIP alternatives, vision-language instruction-tuned models (LLaVA, Qwen-VL, Flamingo alternatives)
 
-**Why LAION-COCO over Flickr30K?**
-- **Scale**: 600M vs. 31K (19,000x larger)
-- **Modernity**: 2023+ curation vs. Flickr30K from 2014
-- **Production-Ready**: Already deduplicated and filtered
-- **Industry Standard**: Used in cutting-edge open VLMs
 
 ## Pipeline Architecture
 

@@ -3,16 +3,15 @@ from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from multi_modal_data_profiling.assets import (
+    caption_stats,
+    dataset_health_report,
     flickr30k_raw,
     image_stats,
-    caption_stats,
-    sample_gallery,
-    dataset_health_report,
     llava_instruct_raw,
     llava_instruction_stats,
     llava_quality_profile,
+    sample_gallery,
 )
-
 
 defs = Definitions(
     assets=[

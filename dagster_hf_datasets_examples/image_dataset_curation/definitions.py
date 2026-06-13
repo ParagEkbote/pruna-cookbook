@@ -3,12 +3,11 @@ from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from image_dataset_curation.assets import (
+    benchmark_refresh_report,
     humaneval_benchmark,
     humaneval_formatted,
-    benchmark_refresh_report,
     humaneval_revision_sensor,
 )
-
 
 defs = Definitions(
     assets=[

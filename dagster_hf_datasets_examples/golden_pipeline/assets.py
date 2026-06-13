@@ -3,12 +3,9 @@ from dagster import (
     MaterializeResult,
     asset,
 )
-
 from dagster_hf_datasets import hf_dataset_asset
-
 from datasets import Dataset
 from transformers import AutoTokenizer
-
 
 TOKENIZER = "bert-base-uncased"
 

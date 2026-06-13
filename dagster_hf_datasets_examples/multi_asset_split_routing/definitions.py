@@ -8,7 +8,6 @@ from multi_asset_split_routing.assets import (
     split_lineage_report,
 )
 
-
 defs = Definitions(
     assets=[
         glue_sst2,
