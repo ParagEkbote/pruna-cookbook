@@ -52,7 +52,7 @@ def flickr30k_raw(
 def image_stats(
     context: AssetExecutionContext,
     flickr30k_raw: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Extract per-image resolution and aspect ratio statistics.
 
     Iterates over PIL Image objects in the dataset, recording
@@ -111,7 +111,21 @@ def image_stats(
         }
     )
 
-    return stats_dataset
+    return MaterializeResult(
+        value=stats_dataset,
+        metadata={
+            "rows": len(stats_dataset),
+            "image_count": len(records),
+            "width_min": min(widths),
+            "width_max": max(widths),
+            "width_mean": round(statistics.mean(widths), 1),
+            "height_min": min(heights),
+            "height_max": max(heights),
+            "height_mean": round(statistics.mean(heights), 1),
+            "aspect_ratio_mean": round(statistics.mean(aspects), 4),
+            "color_modes": str(dict(mode_counts)),
+        },
+    )
 
 
 # ── Step 3: Caption statistics ────────────────────────────────────────────────
@@ -123,7 +137,7 @@ def image_stats(
 def caption_stats(
     context: AssetExecutionContext,
     flickr30k_raw: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Compute per-example caption length and vocabulary statistics.
 
     Each Flickr30k example has a list of 5 captions. This asset
@@ -172,7 +186,18 @@ def caption_stats(
         }
     )
 
-    return stats_dataset
+    return MaterializeResult(
+        value=stats_dataset,
+        metadata={
+            "rows": len(stats_dataset),
+            "examples_analyzed": len(records),
+            "vocabulary_size": vocab_size,
+            "avg_caption_length_mean": round(statistics.mean(all_lengths), 2),
+            "avg_caption_length_min": round(min(all_lengths), 2),
+            "avg_caption_length_max": round(max(all_lengths), 2),
+            "total_captions": sum(r["num_captions"] for r in records),
+        },
+    )
 
 
 # ── Step 4: Thumbnail gallery ─────────────────────────────────────────────────
@@ -183,7 +208,7 @@ def caption_stats(
 def sample_gallery(
     context: AssetExecutionContext,
     flickr30k_raw: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Save a thumbnail gallery of 16 sample images to disk.
 
     Writes 128×128 JPEG thumbnails to `.dagster_hf_storage/sample_gallery/`.
@@ -238,7 +263,7 @@ def dataset_health_report(
     flickr30k_raw: Dataset,
     image_stats: Dataset,
     caption_stats: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Combine image and caption statistics into a single health report.
 
     Flags potential quality issues:
@@ -284,7 +309,10 @@ def dataset_health_report(
     context.log.info("Dataset health report: %s", report)
     context.add_output_metadata(report)
 
-    return report
+    return MaterializeResult(
+        value=report,
+        metadata=report,
+    )
 
 
 # ── Step 6: LLaVA-150K (Modern Instruction-Tuned Vision-Language) ────────────
@@ -330,7 +358,7 @@ def llava_instruct_raw(
 def llava_instruction_stats(
     context: AssetExecutionContext,
     llava_instruct_raw: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Extract instruction and response statistics from LLaVA data.
 
     Unlike Flickr30K (multiple captions per image), LLaVA has
@@ -400,7 +428,21 @@ def llava_instruction_stats(
         }
     )
 
-    return stats_dataset
+    return MaterializeResult(
+        value=stats_dataset,
+        metadata={
+            "rows": len(stats_dataset),
+            "example_count": len(records),
+            "instruction_tokens_mean": round(statistics.mean(instr_tokens), 1)
+            if instr_tokens else 0,
+            "response_tokens_mean": round(statistics.mean(resp_tokens), 1)
+            if resp_tokens else 0,
+            "question_fraction": round(
+                sum(1 for r in records if r["is_question"]) / len(records),
+                2,
+            ) if records else 0,
+        },
+    )
 
 
 @asset(group_name="multimodal_profiling")

@@ -3,20 +3,30 @@ from dagster_hf_datasets import HuggingFaceResource
 from dagster_hf_datasets.io_manager import HFParquetIOManager
 
 from image_dataset_curation.assets import (
-    benchmark_refresh_report,
-    humaneval_benchmark,
-    humaneval_formatted,
-    humaneval_revision_sensor,
+    aspect_ratio_validated,
+    check_aspect_bounds,
+    check_curation_retention,
+    corrupt_removed,
+    curated_export,
+    curation_report,
+    deduplicated_images,
+    resolution_filtered,
+    tiny_imagenet_raw,
 )
 
 defs = Definitions(
     assets=[
-        humaneval_benchmark,
-        humaneval_formatted,
-        benchmark_refresh_report,
+        tiny_imagenet_raw,
+        resolution_filtered,
+        corrupt_removed,
+        deduplicated_images,
+        aspect_ratio_validated,
+        curated_export,
+        curation_report,
     ],
-    sensors=[
-        humaneval_revision_sensor,
+    asset_checks=[
+        check_curation_retention,
+        check_aspect_bounds,
     ],
     resources={
         "huggingface": HuggingFaceResource(

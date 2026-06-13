@@ -53,7 +53,7 @@ def squad_train(
 def squad_enriched(
     context: AssetExecutionContext,
     squad_train: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Enrich SQuAD with a derived `answer_length` column.
 
     Adds the token count of the first answer span to each row.
@@ -83,7 +83,15 @@ def squad_enriched(
         }
     )
 
-    return enriched
+    return MaterializeResult(
+        value=enriched,
+        metadata={
+            "rows": len(enriched),
+            "answer_length_min": min_len,
+            "answer_length_max": max_len,
+            "answer_length_avg": round(avg_len, 2),
+        },
+    )
 
 
 # ── Step 3: Generate and publish dataset card ─────────────────────────────────

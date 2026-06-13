@@ -97,7 +97,7 @@ MAX_HEIGHT = 4096
 def resolution_filtered(
     context: AssetExecutionContext,
     tiny_imagenet_raw: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Remove images outside the acceptable resolution range.
 
     Drops images smaller than 32×32 (likely placeholder/corrupt) and
@@ -128,7 +128,17 @@ def resolution_filtered(
             "min_height": MIN_HEIGHT,
         }
     )
-    return filtered
+    return MaterializeResult(
+        value=filtered,
+        metadata={
+            "rows": after,
+            "rows_in": before,
+            "rows_out": after,
+            "dropped": before - after,
+            "min_width": MIN_WIDTH,
+            "min_height": MIN_HEIGHT,
+        },
+    )
 
 
 # ── Step 3: Corrupt image detection ──────────────────────────────────────────
@@ -140,7 +150,7 @@ def resolution_filtered(
 def corrupt_removed(
     context: AssetExecutionContext,
     resolution_filtered: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Remove corrupt or unloadable images.
 
     Uses a two-pass strategy:
@@ -178,7 +188,16 @@ def corrupt_removed(
             "corrupt_indices_sample": str(corrupt_indices[:5]),
         }
     )
-    return cleaned
+    return MaterializeResult(
+        value=cleaned,
+        metadata={
+            "rows": after,
+            "rows_in": before,
+            "rows_out": after,
+            "corrupt_removed": len(corrupt_indices),
+            "corrupt_indices_sample": str(corrupt_indices[:5]),
+        },
+    )
 
 
 # ── Step 4: Perceptual deduplication ─────────────────────────────────────────
@@ -190,7 +209,7 @@ def corrupt_removed(
 def deduplicated_images(
     context: AssetExecutionContext,
     corrupt_removed: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Remove near-duplicate images using 32×32 RGB thumbnail hashing.
 
     Downsamples each image to 32×32 RGB and hashes the raw pixel bytes.
@@ -223,7 +242,16 @@ def deduplicated_images(
             "dedup_method": "32x32 RGB pixel hash (MD5)",
         }
     )
-    return deduped
+    return MaterializeResult(
+        value=deduped,
+        metadata={
+            "rows": after,
+            "rows_in": before,
+            "rows_out": after,
+            "duplicates_removed": before - after,
+            "dedup_method": "32x32 RGB pixel hash (MD5)",
+        },
+    )
 
 
 # ── Step 5: Aspect ratio validation ──────────────────────────────────────────
@@ -239,7 +267,7 @@ MAX_ASPECT = 4.0    # 4:1 landscape
 def aspect_ratio_validated(
     context: AssetExecutionContext,
     deduplicated_images: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Split images into curated (accepted) and rejected sets by aspect ratio.
 
     Images with aspect ratio outside [0.25, 4.0] are atypical for
@@ -279,7 +307,20 @@ def aspect_ratio_validated(
             "max_aspect_threshold": MAX_ASPECT,
         }
     )
-    return curated
+    return MaterializeResult(
+        value=curated,
+        metadata={
+            "rows": after,
+            "rows_in": before,
+            "rows_out": after,
+            "rejected_count": len(rejected_indices),
+            "aspect_ratio_mean": round(statistics.mean(aspect_ratios), 4),
+            "aspect_ratio_min": round(min(aspect_ratios), 4),
+            "aspect_ratio_max": round(max(aspect_ratios), 4),
+            "min_aspect_threshold": MIN_ASPECT,
+            "max_aspect_threshold": MAX_ASPECT,
+        },
+    )
 
 
 # ── Step 6: Multi-format export ───────────────────────────────────────────────
@@ -290,7 +331,7 @@ def aspect_ratio_validated(
 def curated_export(
     context: AssetExecutionContext,
     aspect_ratio_validated: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Export the curated dataset in Parquet and Arrow formats with a manifest.
 
     Writes to `.dagster_hf_storage/curated_images/` in two formats:
@@ -337,7 +378,15 @@ def curated_export(
             "parquet_path": str(parquet_path),
         }
     )
-    return manifest
+    return MaterializeResult(
+        value=manifest,
+        metadata={
+            "total_rows": manifest["total_rows"],
+            "num_classes": manifest["num_classes"],
+            "arrow_path": str(arrow_path),
+            "parquet_path": str(parquet_path),
+        },
+    )
 
 
 # ── Step 7: Curation report ───────────────────────────────────────────────────

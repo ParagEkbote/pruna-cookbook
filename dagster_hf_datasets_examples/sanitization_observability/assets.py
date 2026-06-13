@@ -60,7 +60,7 @@ def raw_fineweb_edu(
 def filtered_fineweb_edu(
     context: AssetExecutionContext,
     raw_fineweb_edu: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Remove null, empty, and very short text examples.
 
     Rows are dropped if:
@@ -80,7 +80,15 @@ def filtered_fineweb_edu(
 
     context.log.info("Filtered: %s rows → %s rows (%s dropped)", before, after, dropped)
 
-    return filtered
+    return MaterializeResult(
+        value=filtered,
+        metadata={
+            "rows": after,
+            "rows_in": before,
+            "rows_out": after,
+            "dropped_rows": dropped,
+        },
+    )
 
 
 # ── Step 3: Deduplicate ───────────────────────────────────────────────────────
@@ -97,7 +105,7 @@ def _text_hash(text: str) -> str:
 def deduplicated_fineweb_edu(
     context: AssetExecutionContext,
     filtered_fineweb_edu: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Remove near-duplicate documents using a prefix hash.
 
     Hashes the first 500 characters of each document. Documents
@@ -124,7 +132,15 @@ def deduplicated_fineweb_edu(
         before - after,
     )
 
-    return deduped
+    return MaterializeResult(
+        value=deduped,
+        metadata={
+            "rows": after,
+            "rows_in": before,
+            "rows_out": after,
+            "duplicates_removed": before - after,
+        },
+    )
 
 
 # ── Step 4: Quality report asset ──────────────────────────────────────────────

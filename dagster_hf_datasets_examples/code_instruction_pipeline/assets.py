@@ -36,7 +36,7 @@ def raw_code_stack(
 
     # Analyze language distribution in sample
     def get_lang(ex):
-        return ex.get("language", "unknown")
+        return ex.get("lang", ex.get("language", "unknown"))
 
     # Sample a subset for language analysis
     lang_sample_indices = list(range(0, min(1000, len(sampled))))
@@ -90,7 +90,7 @@ def language_filtered_code(
     }
 
     def is_target_language(example):
-        lang = example.get("language")
+        lang = example.get("lang", example.get("language"))
         return lang in target_languages
 
     filtered = raw_code_stack.filter(is_target_language)
@@ -136,7 +136,7 @@ def instruction_examples(
 
     for i, example in enumerate(language_filtered_code):
         code = example.get("content", "")
-        lang = example.get("language", "unknown")
+        lang = example.get("lang", example.get("language", "unknown"))
 
         if not code or len(code.split()) < 10:
             continue
@@ -195,7 +195,7 @@ def code_quality_metrics(
     context: AssetExecutionContext,
     raw_code_stack: Dataset,
     language_filtered_code: Dataset,
-    instruction_examples: MaterializeResult,
+    instruction_examples: Dataset,
 ) -> MaterializeResult:
     """Compute dataset quality and diversity metrics.
 
@@ -208,13 +208,16 @@ def code_quality_metrics(
     # Language distribution pre-filter
     lang_counts_raw = Counter()
     for i in range(min(1000, len(raw_code_stack))):
-        lang = raw_code_stack[i].get("language", "unknown")
+        lang = raw_code_stack[i].get("lang", raw_code_stack[i].get("language", "unknown"))
         lang_counts_raw[lang] += 1
 
     # Language distribution post-filter
     lang_counts_filtered = Counter()
     for i in range(min(len(language_filtered_code), 1000)):
-        lang = language_filtered_code[i].get("language", "unknown")
+        lang = language_filtered_code[i].get(
+            "lang",
+            language_filtered_code[i].get("language", "unknown"),
+        )
         lang_counts_filtered[lang] += 1
 
     report = {

@@ -65,7 +65,7 @@ def glue_sst2(
 def glue_sst2_train_normalized(
     context: AssetExecutionContext,
     glue_sst2_train: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Normalize sentence text in the train split.
 
     Strips leading/trailing whitespace and lowercases all sentences.
@@ -82,7 +82,13 @@ def glue_sst2_train_normalized(
     context.log.info("Normalized %s train rows", before)
     context.add_output_metadata({"rows": before, "transformation": "strip + lowercase"})
 
-    return normalized
+    return MaterializeResult(
+        value=normalized,
+        metadata={
+            "rows": before,
+            "transformation": "strip + lowercase",
+        },
+    )
 
 
 @asset(
@@ -93,7 +99,7 @@ def split_lineage_report(
     glue_sst2_train: Dataset,
     glue_sst2_validation: Dataset,
     glue_sst2_test: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Emit a cross-split lineage report comparing row counts and label coverage.
 
     Consumes all three split assets simultaneously, demonstrating that
@@ -130,4 +136,12 @@ def split_lineage_report(
         }
     )
 
-    return report
+    return MaterializeResult(
+        value=report,
+        metadata={
+            "train_rows": report["train"]["rows"],
+            "validation_rows": report["validation"]["rows"],
+            "test_rows": report["test"]["rows"],
+            "total_rows": total_rows,
+        },
+    )

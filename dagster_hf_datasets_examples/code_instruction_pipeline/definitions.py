@@ -1,3 +1,5 @@
+import os
+
 from dagster import Definitions
 from dagster_hf_datasets import (
     HuggingFaceResource,
@@ -22,6 +24,7 @@ defs = Definitions(
         "huggingface": HuggingFaceResource(
             cache_dir=".hf_cache",
             offline=False,
+            token=os.environ.get("HF_TOKEN"),
         ),
         "hf_parquet_io_manager": HFParquetIOManager(
             base_dir=".dagster_hf_storage",

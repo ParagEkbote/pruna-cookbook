@@ -258,7 +258,7 @@ def dedup_quality_report(
     caption_quality_filtered: Dataset,
     deduplicated_by_caption_hash: Dataset,
     language_identified_captions: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Generate comprehensive pipeline efficiency and quality metrics.
 
     Tracks data through all filtering stages and computes:
@@ -312,4 +312,7 @@ def dedup_quality_report(
     context.log.info("Pipeline complete. Quality report: %s", report)
     context.add_output_metadata(report)
 
-    return report
+    return MaterializeResult(
+        value=report,
+        metadata=report,
+    )

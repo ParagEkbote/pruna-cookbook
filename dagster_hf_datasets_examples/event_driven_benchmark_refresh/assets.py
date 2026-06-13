@@ -141,7 +141,7 @@ def benchmark_refresh_report(
     context,
     humaneval_benchmark: Dataset,
     humaneval_formatted: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Emit a report confirming the refresh cycle completed successfully.
 
     Records the fingerprint of the refreshed dataset and the run ID
@@ -158,10 +158,10 @@ def benchmark_refresh_report(
 
     context.log.info("Refresh cycle complete: %s", report)
     context.add_output_metadata(report)
-    return  MaterializeResult(
-            value=report,
-            metadata=report,
-        )
+    return MaterializeResult(
+        value=report,
+        metadata=report,
+    )
 
 
 # ── Sensor ────────────────────────────────────────────────────────────────────

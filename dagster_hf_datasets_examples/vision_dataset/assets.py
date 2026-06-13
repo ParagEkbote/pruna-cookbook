@@ -5,6 +5,7 @@ from datasets import Dataset
 
 @hf_dataset_asset(
     path="google-research-datasets/conceptual_captions",
+    config="unlabeled",
     split="train",
     group_name="vision_language_dataset",
     io_manager_key="hf_parquet_io_manager",
@@ -20,6 +21,7 @@ def conceptual_captions(
         metadata={
             "rows": len(dataset),
             "columns": dataset.column_names,
+            "config": "unlabeled",
             "fingerprint": dataset._fingerprint,
         },
     )

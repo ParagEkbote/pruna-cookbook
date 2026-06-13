@@ -4,16 +4,7 @@ This example demonstrates a **multi-stage data cleaning pipeline** using the mod
 
 ## Dataset: FineWeb
 
-[FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) is a high-quality, deduplicated web corpus containing **15 trillion tokens** of text across diverse domains. It was used to train state-of-the-art language models including:
-- **Phi 3** (Microsoft)
-- **Mistral 7B** (Mistral AI)
-- **OLMo** (Allen Institute)
-
-**Why FineWeb over C4?**
-- Modern alternative to C4 (which is now superseded)
-- Actively maintained and improved (2024+)
-- Better quality filtering and deduplication
-- Used in cutting-edge open LLMs
+[FineWeb](https://huggingface.co/datasets/HuggingFaceFW/fineweb) is a high-quality, deduplicated web corpus containing **15 trillion tokens** of text across diverse domains.
 
 ## Pipeline Architecture
 

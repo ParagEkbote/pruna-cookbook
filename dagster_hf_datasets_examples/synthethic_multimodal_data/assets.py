@@ -82,7 +82,7 @@ def diffusiondb_sample(
 def nsfw_filtered(
     context: AssetExecutionContext,
     diffusiondb_sample: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Drop rows flagged by DiffusionDB's precomputed NSFW scores.
 
     `image_nsfw` and `prompt_nsfw` are floats in [0, 1] (or -1 if not
@@ -112,7 +112,16 @@ def nsfw_filtered(
             "nsfw_threshold": NSFW_THRESHOLD,
         }
     )
-    return filtered
+    return MaterializeResult(
+        value=filtered,
+        metadata={
+            "rows": after,
+            "rows_in": before,
+            "rows_out": after,
+            "dropped": before - after,
+            "nsfw_threshold": NSFW_THRESHOLD,
+        },
+    )
 
 
 # ── Step 3: Synthetic caption generation (BLIP, CPU) ──────────────────────────
@@ -147,7 +156,7 @@ def _load_blip():
 def synthetic_captions(
     context: AssetExecutionContext,
     nsfw_filtered: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Generate a caption for each image using BLIP-base (CPU inference).
 
     Adds a `generated_caption` column. Each caption is generated
@@ -180,7 +189,14 @@ def synthetic_captions(
             "avg_caption_length_words": round(avg_len, 2),
         }
     )
-    return captioned
+    return MaterializeResult(
+        value=captioned,
+        metadata={
+            "rows": len(captioned),
+            "model": "Salesforce/blip-image-captioning-base",
+            "avg_caption_length_words": round(avg_len, 2),
+        },
+    )
 
 
 # ── Step 4: Caption-prompt alignment scoring (MiniLM, CPU) ────────────────────
@@ -210,7 +226,7 @@ def _load_sentence_model():
 def caption_alignment_scores(
     context: AssetExecutionContext,
     synthetic_captions: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Score semantic alignment between original prompt and generated caption.
 
     Adds an `alignment_score` column: cosine similarity between
@@ -250,7 +266,16 @@ def caption_alignment_scores(
             "alignment_score_mean": round(statistics.mean(scores), 3),
         }
     )
-    return scored
+    return MaterializeResult(
+        value=scored,
+        metadata={
+            "rows": len(scored),
+            "model": "all-MiniLM-L6-v2",
+            "alignment_score_min": round(min(scores), 3),
+            "alignment_score_max": round(max(scores), 3),
+            "alignment_score_mean": round(statistics.mean(scores), 3),
+        },
+    )
 
 
 # ── Step 5: Final filtered synthetic dataset ──────────────────────────────────
@@ -262,7 +287,7 @@ def caption_alignment_scores(
 def synthetic_dataset_final(
     context: AssetExecutionContext,
     caption_alignment_scores: Dataset,
-) -> Dataset:
+) -> MaterializeResult:
     """Filter to rows whose generated caption aligns well with the original prompt.
 
     Rows with `alignment_score < ALIGNMENT_THRESHOLD` are dropped. The
@@ -295,7 +320,17 @@ def synthetic_dataset_final(
             "columns": final.column_names,
         }
     )
-    return final
+    return MaterializeResult(
+        value=final,
+        metadata={
+            "rows": len(final),
+            "rows_in": before,
+            "rows_out": after,
+            "dropped": before - after,
+            "alignment_threshold": ALIGNMENT_THRESHOLD,
+            "columns": final.column_names,
+        },
+    )
 
 
 # ── Step 6: Generation report ─────────────────────────────────────────────────
@@ -309,7 +344,7 @@ def synthetic_generation_report(
     nsfw_filtered: Dataset,
     caption_alignment_scores: Dataset,
     synthetic_dataset_final: Dataset,
-) -> dict:
+) -> MaterializeResult:
     """Funnel report across the synthetic generation + filtering pipeline."""
     stages = {
         "raw_sample": len(diffusiondb_sample),
@@ -337,7 +372,14 @@ def synthetic_generation_report(
             "alignment_score_mean": report["alignment_score_mean"],
         }
     )
-    return report
+    return MaterializeResult(
+        value=report,
+        metadata={
+            **{f"stage_{k}": v for k, v in stages.items()},
+            "final_retention_pct": report["final_retention_pct"],
+            "alignment_score_mean": report["alignment_score_mean"],
+        },
+    )
 
 
 # ── Asset checks ──────────────────────────────────────────────────────────────

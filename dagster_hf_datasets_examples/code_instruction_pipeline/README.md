@@ -15,6 +15,10 @@ This example demonstrates **language-specific filtering and code-to-instruction 
 - Deduplicated to remove redundant files
 - Foundation for modern code LLMs
 
+> **Access note:** `bigcode/the-stack-dedup` is gated on the Hugging Face Hub.
+> Accept the dataset terms on the Hub and set `HF_TOKEN` before running this
+> example.
+
 ## Pipeline Architecture
 
 The pipeline demonstrates **language-specific filtering and instruction extraction**:
@@ -96,7 +100,7 @@ Converts code files into instruction-response pairs:
 - Average tokens per instruction
 - Min/max token ranges
 
-### 4. **code_quality_metrics** → `dict` (report)
+### 4. **code_quality_metrics** → `MaterializeResult` (report)
 
 Aggregates metrics across pipeline stages:
 
@@ -147,6 +151,7 @@ Aggregates metrics across pipeline stages:
 
 ```bash
 cd code_instruction_pipeline
+export HF_TOKEN=hf_...
 dagster dev
 ```
 
