@@ -97,7 +97,10 @@ latest_sha = commits[0].commit_id
 
 ```bash
 pip install dagster dagster-hf-datasets
-dagster dev -f definitions.py
+
+cd dagster_hf_datasets_examples
+
+dagster dev -m event_driven_benchmark_refresh.definitions
 ```
 
 To test the sensor manually: in the Dagster UI go to **Automation → Sensors**,

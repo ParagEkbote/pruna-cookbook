@@ -77,8 +77,10 @@ def curated_audio_dataset(context, dataset: Dataset) -> MaterializeResult:
 ## How to run
 
 ```bash
-pip install dagster dagster-hf-datasets
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m audio_dataset_curation.definitions
+
 ```
 
 Then navigate to the **Asset Catalog** in the Dagster UI

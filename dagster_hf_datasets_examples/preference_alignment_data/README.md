@@ -103,8 +103,9 @@ Ready for DPO/ORPO training
 ## Running Locally
 
 ```bash
-cd preference_alignment_data
-dagster dev
+cd dagster_hf_datasets_examples
+
+dagster dev -m preference_alignment_data.definitions
 ```
 
 Materialize both assets:

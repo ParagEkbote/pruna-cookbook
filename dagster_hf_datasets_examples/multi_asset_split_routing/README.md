@@ -83,7 +83,9 @@ glue_sst2_train_normalized  \
 
 ```bash
 pip install dagster dagster-hf-datasets
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m multi_asset_split_routing.definitions
 ```
 
 Materialize `glue_sst2` first (all three splits in one run), then

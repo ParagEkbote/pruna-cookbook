@@ -47,8 +47,9 @@ After materialization, `HFParquetIOManager` writes:
 ## How to run
 
 ```bash
-pip install dagster dagster-hf-datasets
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m basic_hub_ingestion.definitions
 ```
 
 Then open [http://localhost:3000](http://localhost:3000), navigate to the Asset Catalog,

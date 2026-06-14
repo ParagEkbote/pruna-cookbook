@@ -84,8 +84,11 @@ bounded.
 ## How to run
 
 ```bash
-pip install dagster dagster-hf-datasets datasets
-dagster dev -f definitions.py
+pip install dagster dagster-hf-datasets 
+
+cd dagster_hf_datasets_examples
+
+dagster dev -m streaming_oom_datasets.definitions
 ```
 
 Materialize the streamed sample first, then the report. Keep the sample limit

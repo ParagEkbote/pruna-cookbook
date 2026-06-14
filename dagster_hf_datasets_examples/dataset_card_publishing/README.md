@@ -86,9 +86,9 @@ To enable publishing, uncomment the `publisher.publish()` call in `assets.py`.
 ## How to run
 
 ```bash
-pip install dagster dagster-hf-datasets
-# Optional: export HF_TOKEN=hf_... HF_REPO_ID=your-username/squad-enriched
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m dataset_card_publishing.definitions
 ```
 
 Materialize in order: `squad_train` → `squad_enriched` → `squad_dataset_card`.

@@ -88,8 +88,9 @@ and are not persisted by the IO manager.
 
 ```bash
 pip install dagster dagster-hf-datasets Pillow
-export HF_TOKEN=hf_...
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m multi_modal_data_profiling.definitions
 ```
 
 Materialize `flickr30k_raw` first, then `image_stats`, `caption_stats`,

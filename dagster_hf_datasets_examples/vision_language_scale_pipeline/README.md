@@ -141,8 +141,9 @@ Comprehensive pipeline metrics across all stages:
 ## Running Locally
 
 ```bash
-cd vision_language_scale_pipeline
-dagster dev
+cd dagster_hf_datasets_examples
+
+dagster dev -m vision_language_scale_pipeline.definitions
 ```
 
 Materialize order:

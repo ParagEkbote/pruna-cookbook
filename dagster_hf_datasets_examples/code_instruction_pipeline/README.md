@@ -150,9 +150,9 @@ Aggregates metrics across pipeline stages:
 ## Running Locally
 
 ```bash
-cd code_instruction_pipeline
-export HF_TOKEN=hf_...
-dagster dev
+cd dagster_hf_datasets_examples
+
+dagster dev -m code_instruction_pipeline.definitions
 ```
 
 Materialize order:

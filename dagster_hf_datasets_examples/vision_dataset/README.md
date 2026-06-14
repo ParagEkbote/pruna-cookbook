@@ -100,8 +100,9 @@ Hugging Face IO manager.
 ## How to run
 
 ```bash
-pip install dagster dagster-hf-datasets datasets
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m vision_dataset.definitions
 ```
 
 Materialize in order: `conceptual_captions` -> `validated_pairs`, then

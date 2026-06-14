@@ -79,8 +79,9 @@ Face IO manager.
 ## How to run
 
 ```bash
-pip install dagster dagster-hf-datasets
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m dynamic_bucket_partitioning.definitions
 ```
 
 In the Dagster UI, open **Assets**, select `partition_report`, add one or more

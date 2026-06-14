@@ -79,8 +79,9 @@ the materialized `Dataset` object directly.
 ## How to run
 
 ```bash
-pip install dagster dagster-hf-datasets datasets transformers
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m distributed_token_sharding.definitions
 ```
 
 Materialize `fineweb_dataset` first, then `tokenized_fineweb`.

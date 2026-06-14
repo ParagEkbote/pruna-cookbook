@@ -118,7 +118,9 @@ pip install dagster dagster-hf-datasets Pillow
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install transformers sentence-transformers
 
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m synthetic_multimodal_data.definitions
 ```
 
 First run downloads BLIP-base (~990MB) and MiniLM (~90MB) to the local

@@ -96,7 +96,9 @@ def _check_corrupt_via_load(img) -> bool:
 
 ```bash
 pip install dagster dagster-hf-datasets Pillow
-dagster dev -f definitions.py
+cd dagster_hf_datasets_examples
+
+dagster dev -m image_dataset_curation.definitions
 ```
 
 Materialize sequentially from `tiny_imagenet_raw` through `aspect_ratio_validated`,

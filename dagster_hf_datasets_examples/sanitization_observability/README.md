@@ -84,7 +84,10 @@ def check_no_null_text(deduplicated_fineweb_edu: Dataset) -> AssetCheckResult: .
 
 ```bash
 pip install dagster dagster-hf-datasets
-dagster dev -f definitions.py
+
+cd dagster_hf_datasets_examples
+
+dagster dev -m sanitization_observability.definitions
 ```
 
 Materialize assets in order: `raw_fineweb_edu` → `filtered_fineweb_edu` →

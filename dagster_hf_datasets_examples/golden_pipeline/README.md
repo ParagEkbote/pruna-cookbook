@@ -90,8 +90,9 @@ quality_report (Compute metrics)
 ## Running Locally
 
 ```bash
-cd golden_pipeline
-dagster dev
+cd dagster_hf_datasets_examples
+
+dagster dev -m golden_pipeline.definitions
 ```
 
 Then open http://localhost:3000 and materialize the assets.
